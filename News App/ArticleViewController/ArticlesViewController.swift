@@ -9,7 +9,7 @@
 import UIKit
 import AlamofireImage
 
-class ViewController: UIViewController {
+class ArticlesViewController: UIViewController {
     
     //MARK: - Outlets
     
@@ -38,15 +38,27 @@ class ViewController: UIViewController {
         searchBarController.obscuresBackgroundDuringPresentation = false
     }
     
+    //MARK: - Setup table-view
+    
     func setupTableView() {
         tableView.tableFooterView = UIView()
         activityIndicator.isHidden = true
+    }
+    
+     //MARK: - Setup cell
+    
+    func setValueInCell(_ cell: TableViewCell, _ article: Articles ) {
+        cell.articleTitleLabel.text = article.title
+        cell.articleDescriptionLabel.text = article.description
+        cell.backgroundColor = .clear
+        guard let url = URL(string: article.urlToImage ?? "") else { return }
+         cell.articleImage.af.setImage(withURL: url)
     }
 }
 
 //MARK: - Extension UITableViewDataSource
 
-extension ViewController: UITableViewDataSource {
+extension ArticlesViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return articles?.count ?? 0
@@ -55,17 +67,14 @@ extension ViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: String(describing:TableViewCell.self), for: indexPath) as? TableViewCell else { return UITableViewCell()}
         guard let article = articles?[indexPath.row] else { return UITableViewCell() }
-        cell.articleTitleLabel.text = article.title
-        cell.articleDescriptionLabel.text = article.description
-        guard let url = URL(string: article.urlToImage ) else { return UITableViewCell()}
-        cell.articleImage.af.setImage(withURL: url)
+        setValueInCell(cell, article)
         return cell
     }
 }
 
 //MARK: - Extension UITableViewDelegate
 
-extension ViewController: UITableViewDelegate {
+extension ArticlesViewController: UITableViewDelegate {
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let label = UILabel()
@@ -94,11 +103,12 @@ extension ViewController: UITableViewDelegate {
 
 //MARK: - Extension UISearchBarDelegate
 
-extension ViewController: UISearchBarDelegate {
+extension ArticlesViewController: UISearchBarDelegate {
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-    self.activityIndicator.startAnimating()
-    self.activityIndicator.hidesWhenStopped = true
+        activityIndicator.isHidden = false
+        activityIndicator.startAnimating()
+        activityIndicator.hidesWhenStopped = true
         NetworkManager.shared.sendRequest(searchText: searchBar.text) { [weak self] (result) in
             guard let self = self else { return }
             switch result {
@@ -109,7 +119,7 @@ extension ViewController: UISearchBarDelegate {
             case .failure(let message):
                 self.showAlert(message: message.rawValue)
             }
-//            self.activityIndicator.stopAnimating()
+            //            self.activityIndicator.stopAnimating()
         }
     }
 }
